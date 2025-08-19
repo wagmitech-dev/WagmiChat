@@ -104,8 +104,6 @@ const SidePanelGroup = memo(
       panelRef.current?.collapse();
     }, []);
 
-  const minSizeMain = useMemo(() => (artifacts != null ? 15 : 30), [artifacts]);
-
   return (
     <>
       <ResizablePanelGroup
