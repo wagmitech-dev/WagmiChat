@@ -1,7 +1,7 @@
 import React from 'react';
 import { Users } from 'lucide-react';
 import { SystemRoles } from 'librechat-data-provider';
-import { TooltipAnchor } from '~/components/ui';
+import { TooltipAnchor } from '@librechat/client';
 import { useAuthContext } from '~/hooks';
 import { useLocalize } from '~/hooks';
 import { useNavigate } from 'react-router-dom';

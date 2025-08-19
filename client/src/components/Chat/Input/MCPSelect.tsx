@@ -4,9 +4,9 @@ import { useRecoilState } from 'recoil';
 import { Constants, EModelEndpoint, LocalStorageKeys, SystemRoles } from 'librechat-data-provider';
 import { useAvailableToolsQuery } from '~/data-provider';
 import useLocalStorage from '~/hooks/useLocalStorageAlt';
-import MultiSelect from '~/components/ui/MultiSelect';
+import { MultiSelect } from '@librechat/client';
 import { ephemeralAgentByConvoId } from '~/store';
-import MCPIcon from '~/components/ui/MCPIcon';
+import { MCPIcon } from '@librechat/client';
 import { useLocalize, useAuthContext } from '~/hooks';
 import { useGetStartupConfig } from '~/data-provider';
 

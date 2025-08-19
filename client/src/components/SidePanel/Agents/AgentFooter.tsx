@@ -74,7 +74,6 @@ export default function AgentFooter({
           !permissionsLoading && (
             <DeleteButton
               agent_id={agent_id}
-<<<<<<< HEAD
               setCurrentAgentId={setCurrentAgentId}
               createMutation={createMutation}
             />

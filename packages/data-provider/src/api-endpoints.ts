@@ -325,7 +325,7 @@ export const confirmTwoFactor = () => '/api/auth/2fa/confirm';
 export const disableTwoFactor = () => '/api/auth/2fa/disable';
 export const regenerateBackupCodes = () => '/api/auth/2fa/backup/regenerate';
 export const verifyTwoFactorTemp = () => '/api/auth/2fa/verify-temp';
-<<<<<<< HEAD
+export const setPassword = () => '/api/auth/set-password';
 
 /* Memories */
 export const memories = () => '/api/memories';
@@ -362,8 +362,5 @@ export const getEffectivePermissions = (resourceType: ResourceType, resourceId: 
 // SharePoint Graph API Token
 export const graphToken = (scopes: string) =>
   `/api/auth/graph-token?scopes=${encodeURIComponent(scopes)}`;
-=======
-export const setPassword = () => '/api/auth/set-password';
 
 export const users = () => '/api/admin/users';
->>>>>>> main
