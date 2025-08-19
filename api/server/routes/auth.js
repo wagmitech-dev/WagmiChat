@@ -1,5 +1,6 @@
 const express = require('express');
 const { createSetBalanceConfig } = require('@librechat/api');
+const emailWhitelistRoutes = require('./emailWhitelist');
 const {
   resetPasswordRequestController,
   resetPasswordController,
@@ -17,11 +18,28 @@ const {
 const { verify2FAWithTempToken } = require('~/server/controllers/auth/TwoFactorAuthController');
 const { logoutController } = require('~/server/controllers/auth/LogoutController');
 const { loginController } = require('~/server/controllers/auth/LoginController');
+const { setPasswordController } = require('~/server/controllers/SetPasswordController');
 const { getBalanceConfig } = require('~/server/services/Config');
-const middleware = require('~/server/middleware');
+const {
+  checkBan,
+  logHeaders,
+  loginLimiter,
+  requireJwtAuth,
+  checkInviteUser,
+  checkActivationToken,
+  registerLimiter,
+  requireLdapAuth,
+  setBalanceConfig,
+  requireLocalAuth,
+  resetPasswordLimiter,
+  validateRegistration,
+  validatePasswordReset,
+  inviteLimiter,
+} = require('~/server/middleware');
 const { Balance } = require('~/db/models');
 
-const setBalanceConfig = createSetBalanceConfig({
+// Create balance config with both approaches
+const balanceConfig = createSetBalanceConfig({
   getBalanceConfig,
   Balance,
 });
@@ -63,13 +81,48 @@ router.post(
   resetPasswordController,
 );
 
-router.get('/2fa/enable', middleware.requireJwtAuth, enable2FA);
-router.post('/2fa/verify', middleware.requireJwtAuth, verify2FA);
-router.post('/2fa/verify-temp', middleware.checkBan, verify2FAWithTempToken);
-router.post('/2fa/confirm', middleware.requireJwtAuth, confirm2FA);
-router.post('/2fa/disable', middleware.requireJwtAuth, disable2FA);
-router.post('/2fa/backup/regenerate', middleware.requireJwtAuth, regenerateBackupCodes);
+// Private Beta - Set Password Route
+router.post(
+  '/set-password',
+  inviteLimiter,
+  checkBan,
+  checkActivationToken,
+  setPasswordController,
+);
 
-router.get('/graph-token', middleware.requireJwtAuth, graphTokenController);
+router.get('/2fa/enable', requireJwtAuth, enable2FA);
+router.post('/2fa/verify', requireJwtAuth, verify2FA);
+router.post('/2fa/verify-temp', checkBan, verify2FAWithTempToken);
+router.post('/2fa/confirm', requireJwtAuth, confirm2FA);
+router.post('/2fa/disable', requireJwtAuth, disable2FA);
+router.post('/2fa/backup/regenerate', requireJwtAuth, regenerateBackupCodes);
+
+router.get('/graph-token', requireJwtAuth, graphTokenController);
+
+// Email whitelist routes
+router.use('/', emailWhitelistRoutes);
+
+// Invitation token validation route
+router.get('/invite/validate/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    const { getInviteByToken } = require('~/models/inviteUser');
+    const invite = await getInviteByToken(token);
+
+    if (invite.error) {
+      return res.status(404).json({ error: invite.message });
+    }
+
+    return res.json({ email: invite.email });
+  } catch (error) {
+    console.error('Error validating invitation token:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 module.exports = router;

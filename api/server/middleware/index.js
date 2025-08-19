@@ -3,7 +3,7 @@ const validateRegistration = require('./validateRegistration');
 const validateImageRequest = require('./validateImageRequest');
 const buildEndpointOption = require('./buildEndpointOption');
 const validateMessageReq = require('./validateMessageReq');
-const checkDomainAllowed = require('./checkDomainAllowed');
+const checkEmailWhitelisted = require('./checkEmailWhitelisted');
 const concurrentLimiter = require('./concurrentLimiter');
 const validateEndpoint = require('./validateEndpoint');
 const requireLocalAuth = require('./requireLocalAuth');
@@ -12,6 +12,7 @@ const accessResources = require('./accessResources');
 const requireLdapAuth = require('./requireLdapAuth');
 const abortMiddleware = require('./abortMiddleware');
 const checkInviteUser = require('./checkInviteUser');
+const checkActivationToken = require('./checkActivationToken');
 const requireJwtAuth = require('./requireJwtAuth');
 const validateModel = require('./validateModel');
 const moderateText = require('./moderateText');
@@ -39,12 +40,13 @@ module.exports = {
   validateModel,
   requireJwtAuth,
   checkInviteUser,
+  checkActivationToken,
   requireLdapAuth,
   requireLocalAuth,
   canDeleteAccount,
   validateEndpoint,
   concurrentLimiter,
-  checkDomainAllowed,
+  checkEmailWhitelisted,
   validateMessageReq,
   buildEndpointOption,
   validateRegistration,

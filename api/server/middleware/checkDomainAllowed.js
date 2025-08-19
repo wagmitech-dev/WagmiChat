@@ -1,8 +1,8 @@
-const { isEmailDomainAllowed } = require('~/server/services/domains');
+const { isEmailWhitelisted } = require('~/server/services/emailWhitelist');
 const { logger } = require('~/config');
 
 /**
- * Checks the domain's social login is allowed
+ * Checks if the user's email is whitelisted for social login
  *
  * @async
  * @function
@@ -10,16 +10,16 @@ const { logger } = require('~/config');
  * @param {Object} res - Express response object.
  * @param {Function} next - Next middleware function.
  *
- * @returns {Promise<function|Object>} - Returns a Promise which when resolved calls next middleware if the domain's email is allowed
+ * @returns {Promise<function|Object>} - Returns a Promise which when resolved calls next middleware if the email is whitelisted
  */
-const checkDomainAllowed = async (req, res, next = () => {}) => {
+const checkEmailWhitelisted = async (req, res, next = () => {}) => {
   const email = req?.user?.email;
-  if (email && !(await isEmailDomainAllowed(email))) {
-    logger.error(`[Social Login] [Social Login not allowed] [Email: ${email}]`);
-    return res.redirect('/login');
+  if (email && !(await isEmailWhitelisted(email))) {
+    logger.error(`[Social Login] [Email not whitelisted] [Email: ${email}]`);
+    return res.redirect('/login?error=email_not_whitelisted');
   } else {
     return next();
   }
 };
 
-module.exports = checkDomainAllowed;
+module.exports = checkEmailWhitelisted;

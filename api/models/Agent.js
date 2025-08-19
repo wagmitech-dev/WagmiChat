@@ -131,6 +131,21 @@ const loadAgent = async ({ req, agent_id, endpoint, model_parameters }) => {
     return null;
   }
 
+  // Check if the user is in the sharedWithUsers array
+  if (agent.sharedWithUsers && agent.sharedWithUsers.length > 0) {
+    const isSharedWithUser = agent.sharedWithUsers.some(
+      (sharedUserId) => sharedUserId.toString() === req.user.id,
+    );
+    if (isSharedWithUser) {
+      agent.version = agent.versions ? agent.versions.length : 0;
+      return agent;
+    }
+  }
+
+  if (!agent.projectIds) {
+    return null;
+  }
+
   agent.version = agent.versions ? agent.versions.length : 0;
   return agent;
 };
@@ -624,13 +639,19 @@ const getListAgentsByAccess = async ({
 const getListAgents = async (searchParameter) => {
   const { author, ...otherParams } = searchParameter;
 
-  let query = Object.assign({ author }, otherParams);
+  // Base query for agents authored by the user
+  const authorQuery = Object.assign({ author }, otherParams);
 
+  // Query for agents shared with the user
+  const sharedQuery = Object.assign({ sharedWithUsers: author }, otherParams);
+
+  let query = { $or: [authorQuery, sharedQuery] };
+
+  // Add global agents to the query if they exist
   const globalProject = await getProjectByName(GLOBAL_PROJECT_NAME, ['agentIds']);
   if (globalProject && (globalProject.agentIds?.length ?? 0) > 0) {
     const globalQuery = { id: { $in: globalProject.agentIds }, ...otherParams };
-    delete globalQuery.author;
-    query = { $or: [globalQuery, query] };
+    query.$or.push(globalQuery);
   }
   const agents = (
     await Agent.find(query, {
@@ -644,6 +665,7 @@ const getListAgents = async (searchParameter) => {
       // @deprecated - isCollaborative replaced by ACL permissions
       isCollaborative: 1,
       category: 1,
+      sharedWithUsers: 1,
     }).lean()
   ).map((agent) => {
     if (agent.author?.toString() !== author) {
@@ -651,6 +673,10 @@ const getListAgents = async (searchParameter) => {
     }
     if (agent.author) {
       agent.author = agent.author.toString();
+    }
+    // Convert sharedWithUsers ObjectIds to strings
+    if (agent.sharedWithUsers) {
+      agent.sharedWithUsers = agent.sharedWithUsers.map((id) => id.toString());
     }
     return agent;
   });
@@ -809,6 +835,7 @@ const generateActionMetadataHash = async (actionIds, actions) => {
 
   return hashHex;
 };
+
 /**
  * Counts the number of promoted agents.
  * @returns  {Promise<number>} - The count of promoted agents
@@ -819,11 +846,49 @@ const countPromotedAgents = async () => {
 };
 
 /**
+ * Updates the users that have access to an agent, adding and removing user IDs as specified.
+ *
+ * @param {Object} params - Parameters for updating the agent's shared users.
+ * @param {MongoUser} params.user - The user making the update (must be admin or agent author).
+ * @param {string} params.agentId - The ID of the agent to update.
+ * @param {string[]} [params.sharedWithUsers] - Array of user IDs to add to the agent's shared users.
+ * @param {string[]} [params.removeSharedUsers] - Array of user IDs to remove from the agent's shared users.
+ * @returns {Promise<MongoAgent>} The updated agent document.
+ * @throws {Error} If there's an error updating the agent.
+ */
+const updateAgentSharedUsers = async ({ user, agentId, sharedWithUsers, removeSharedUsers }) => {
+  const updateOps = {};
+
+  if (removeSharedUsers && removeSharedUsers.length > 0) {
+    updateOps.$pull = { sharedWithUsers: { $in: removeSharedUsers } };
+  }
+
+  if (sharedWithUsers && sharedWithUsers.length > 0) {
+    updateOps.$addToSet = { sharedWithUsers: { $each: sharedWithUsers } };
+  }
+
+  if (Object.keys(updateOps).length === 0) {
+    return await getAgent({ id: agentId });
+  }
+
+  const updateQuery = { id: agentId, author: user.id };
+  if (user.role === SystemRoles.ADMIN) {
+    delete updateQuery.author;
+  }
+
+  const updatedAgent = await updateAgent(updateQuery, updateOps);
+  if (updatedAgent) {
+    return updatedAgent;
+  }
+
+  return await getAgent({ id: agentId });
+};
+
+/**
  * Load a default agent based on the endpoint
  * @param {string} endpoint
  * @returns {Agent | null}
  */
-
 module.exports = {
   getAgent,
   loadAgent,
@@ -838,4 +903,5 @@ module.exports = {
   removeAgentResourceFiles,
   generateActionMetadataHash,
   countPromotedAgents,
+  updateAgentSharedUsers,
 };

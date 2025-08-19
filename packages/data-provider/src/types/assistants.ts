@@ -234,6 +234,7 @@ export type Agent = {
   version?: number;
   category?: string;
   support_contact?: SupportContact;
+  sharedWithUsers?: string[];
 };
 
 export type TAgentsMap = Record<string, Agent | undefined>;
@@ -273,6 +274,8 @@ export type AgentUpdateParams = {
   projectIds?: string[];
   removeProjectIds?: string[];
   isCollaborative?: boolean;
+  sharedWithUsers?: string[];
+  removeSharedUsers?: string[];
 } & Pick<
   Agent,
   | 'agent_ids'

@@ -146,7 +146,10 @@ const getAvailableTools = async (req, res) => {
       }
     });
 
-    const toolDefinitions = (await getCachedTools({ includeGlobal: true })) || {};
+    // Combine both cached tools and available tools
+    const cachedToolDefinitions = (await getCachedTools({ includeGlobal: true })) || {};
+    const availableToolDefinitions = req.app.locals.availableTools || {};
+    const toolDefinitions = { ...availableToolDefinitions, ...cachedToolDefinitions };
 
     const toolsOutput = [];
     for (const plugin of authenticatedPlugins) {

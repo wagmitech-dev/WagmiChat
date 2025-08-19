@@ -9,6 +9,7 @@ import { useGetStartupConfig } from '~/data-provider';
 import ExportAndShareMenu from './ExportAndShareMenu';
 import BookmarkMenu from './Menus/BookmarkMenu';
 import { TemporaryChat } from './TemporaryChat';
+import { ManageUsers } from './ManageUsers';
 import AddMultiConvo from './AddMultiConvo';
 import { useHasAccess } from '~/hooks';
 
@@ -66,6 +67,7 @@ export default function Header() {
                   isSharedButtonEnabled={startupConfig?.sharedLinksEnabled ?? false}
                 />
                 <TemporaryChat />
+                <ManageUsers />
               </>
             )}
           </div>
@@ -76,6 +78,7 @@ export default function Header() {
               isSharedButtonEnabled={startupConfig?.sharedLinksEnabled ?? false}
             />
             <TemporaryChat />
+            <ManageUsers />
           </div>
         )}
       </div>

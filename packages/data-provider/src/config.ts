@@ -621,6 +621,7 @@ export type TStartupConfig = {
   serverDomain: string;
   emailLoginEnabled: boolean;
   registrationEnabled: boolean;
+  privateBetaMode: boolean;
   socialLoginEnabled: boolean;
   passwordResetEnabled: boolean;
   emailEnabled: boolean;
@@ -660,6 +661,7 @@ export type TStartupConfig = {
     }
   >;
   mcpPlaceholder?: string;
+  mcpJustAdmin: boolean;
 };
 
 export enum OCRStrategy {

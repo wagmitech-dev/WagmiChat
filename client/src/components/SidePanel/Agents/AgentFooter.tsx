@@ -74,6 +74,7 @@ export default function AgentFooter({
           !permissionsLoading && (
             <DeleteButton
               agent_id={agent_id}
+<<<<<<< HEAD
               setCurrentAgentId={setCurrentAgentId}
               createMutation={createMutation}
             />
@@ -86,6 +87,10 @@ export default function AgentFooter({
               resourceId={agent_id}
               resourceName={agent?.name ?? ''}
               resourceType={ResourceType.AGENT}
+              agentName={agent?.name ?? ''}
+              projectIds={agent?.projectIds ?? []}
+              isCollaborative={agent?.isCollaborative}
+              sharedWithUsers={agent?.sharedWithUsers ?? []}
             />
           )}
         {agent && agent.author === user?.id && <DuplicateAgent agent_id={agent_id} />}

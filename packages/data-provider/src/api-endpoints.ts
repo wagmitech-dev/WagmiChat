@@ -127,6 +127,23 @@ export const requestPasswordReset = () => '/api/auth/requestPasswordReset';
 
 export const resetPassword = () => '/api/auth/resetPassword';
 
+// Email whitelist endpoints
+export const requestEmailWhitelist = () => '/api/auth/request-whitelist';
+export const getEmailWhitelistRequests = (status?: string, page?: number, limit?: number) => {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  if (page) params.append('page', page.toString());
+  if (limit) params.append('limit', limit.toString());
+  const query = params.toString();
+  return `/api/auth/whitelist-requests${query ? `?${query}` : ''}`;
+};
+export const reviewEmailWhitelistRequest = (requestId: string) =>
+  `/api/auth/whitelist-requests/${requestId}`;
+export const deleteEmailWhitelistRequest = (requestId: string) =>
+  `/api/auth/whitelist-requests/${requestId}`;
+export const validateInviteToken = (token: string) =>
+  `/api/auth/invite/validate/${encodeURIComponent(token)}`;
+
 export const verifyEmail = () => '/api/user/verify';
 
 export const resendVerificationEmail = () => '/api/user/verify/resend';
@@ -308,6 +325,7 @@ export const confirmTwoFactor = () => '/api/auth/2fa/confirm';
 export const disableTwoFactor = () => '/api/auth/2fa/disable';
 export const regenerateBackupCodes = () => '/api/auth/2fa/backup/regenerate';
 export const verifyTwoFactorTemp = () => '/api/auth/2fa/verify-temp';
+<<<<<<< HEAD
 
 /* Memories */
 export const memories = () => '/api/memories';
@@ -344,3 +362,8 @@ export const getEffectivePermissions = (resourceType: ResourceType, resourceId: 
 // SharePoint Graph API Token
 export const graphToken = (scopes: string) =>
   `/api/auth/graph-token?scopes=${encodeURIComponent(scopes)}`;
+=======
+export const setPassword = () => '/api/auth/set-password';
+
+export const users = () => '/api/admin/users';
+>>>>>>> main

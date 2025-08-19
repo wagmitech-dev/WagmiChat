@@ -504,3 +504,7 @@ export const useMCPServerConnectionStatusQuery = (
     },
   );
 };
+
+export const validateInviteToken = (token: string): Promise<{ email: string }> => {
+  return dataService.validateInviteToken(token);
+};

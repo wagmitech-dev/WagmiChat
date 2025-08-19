@@ -1,21 +1,101 @@
-import React, { memo, useCallback } from 'react';
-import { MultiSelect, MCPIcon } from '@librechat/client';
-import MCPServerStatusIcon from '~/components/MCP/MCPServerStatusIcon';
-import { useMCPServerManager } from '~/hooks/MCP/useMCPServerManager';
-import MCPConfigDialog from '~/components/MCP/MCPConfigDialog';
 
-function MCPSelect() {
-  const {
-    configuredServers,
-    mcpValues,
-    isPinned,
-    placeholderText,
-    batchToggleServers,
-    getServerStatusIconProps,
-    getConfigDialogProps,
-    isInitializing,
-    localize,
-  } = useMCPServerManager();
+import React, { memo, useRef, useMemo, useEffect, useCallback } from 'react';
+import { useRecoilState } from 'recoil';
+import { Constants, EModelEndpoint, LocalStorageKeys, SystemRoles } from 'librechat-data-provider';
+import { useAvailableToolsQuery } from '~/data-provider';
+import useLocalStorage from '~/hooks/useLocalStorageAlt';
+import MultiSelect from '~/components/ui/MultiSelect';
+import { ephemeralAgentByConvoId } from '~/store';
+import MCPIcon from '~/components/ui/MCPIcon';
+import { useLocalize, useAuthContext } from '~/hooks';
+import { useGetStartupConfig } from '~/data-provider';
+
+const storageCondition = (value: unknown, rawCurrentValue?: string | null) => {
+  if (rawCurrentValue) {
+    try {
+      const currentValue = rawCurrentValue?.trim() ?? '';
+      if (currentValue.length > 2) {
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return Array.isArray(value) && value.length > 0;
+};
+
+function MCPSelect({ conversationId }: { conversationId?: string | null }) {
+  const localize = useLocalize();
+  const { user } = useAuthContext();
+  const { data: startupConfig } = useGetStartupConfig();
+  const key = conversationId ?? Constants.NEW_CONVO;
+  const hasSetFetched = useRef<string | null>(null);
+
+  // Check if MCP should be restricted to admins only
+  const mcpJustAdmin = startupConfig?.mcpJustAdmin === true;
+  const isAdmin = user?.role === SystemRoles.ADMIN;
+  
+  // If MCP is restricted to admins only and user is not admin, don't render the component
+  if (mcpJustAdmin && !isAdmin) {
+    return null;
+  }
+
+  const { data: mcpServerSet, isFetched } = useAvailableToolsQuery(EModelEndpoint.agents, {
+    select: (data) => {
+      const serverNames = new Set<string>();
+      data.forEach((tool) => {
+        const isMCP = tool.pluginKey.includes(Constants.mcp_delimiter);
+        if (isMCP && tool.chatMenu !== false) {
+          const parts = tool.pluginKey.split(Constants.mcp_delimiter);
+          serverNames.add(parts[parts.length - 1]);
+        }
+      });
+      return serverNames;
+    },
+  });
+
+  const [ephemeralAgent, setEphemeralAgent] = useRecoilState(ephemeralAgentByConvoId(key));
+  const mcpState = useMemo(() => {
+    return ephemeralAgent?.mcp ?? [];
+  }, [ephemeralAgent?.mcp]);
+
+  const setSelectedValues = useCallback(
+    (values: string[] | null | undefined) => {
+      if (!values) {
+        return;
+      }
+      if (!Array.isArray(values)) {
+        return;
+      }
+      setEphemeralAgent((prev) => ({
+        ...prev,
+        mcp: values,
+      }));
+    },
+    [setEphemeralAgent],
+  );
+  const [mcpValues, setMCPValues] = useLocalStorage<string[]>(
+    `${LocalStorageKeys.LAST_MCP_}${key}`,
+    mcpState,
+    setSelectedValues,
+    storageCondition,
+  );
+
+  useEffect(() => {
+    if (hasSetFetched.current === key) {
+      return;
+    }
+    if (!isFetched) {
+      return;
+    }
+    hasSetFetched.current = key;
+    if ((mcpServerSet?.size ?? 0) > 0) {
+      setMCPValues(mcpValues.filter((mcp) => mcpServerSet?.has(mcp)));
+      return;
+    }
+    setMCPValues([]);
+  }, [isFetched, setMCPValues, mcpServerSet, key, mcpValues]);
+
 
   const renderSelectedValues = useCallback(
     (values: string[], placeholder?: string) => {
@@ -79,22 +159,26 @@ function MCPSelect() {
   const configDialogProps = getConfigDialogProps();
 
   return (
-    <>
-      <MultiSelect
-        items={configuredServers}
-        selectedValues={mcpValues ?? []}
-        setSelectedValues={batchToggleServers}
-        renderSelectedValues={renderSelectedValues}
-        renderItemContent={renderItemContent}
-        placeholder={placeholderText}
-        popoverClassName="min-w-fit"
-        className="badge-icon min-w-fit"
-        selectIcon={<MCPIcon className="icon-md text-text-primary" />}
-        selectItemsClassName="border border-blue-600/50 bg-blue-500/10 hover:bg-blue-700/10"
-        selectClassName="group relative inline-flex items-center justify-center md:justify-start gap-1.5 rounded-full border border-border-medium text-sm font-medium transition-all md:w-full size-9 p-2 md:p-3 bg-transparent shadow-sm hover:bg-surface-hover hover:shadow-md active:shadow-inner"
-      />
-      {configDialogProps && <MCPConfigDialog {...configDialogProps} />}
-    </>
+    <MultiSelect
+      items={mcpServers ?? []}
+      selectedValues={mcpValues ?? []}
+      setSelectedValues={setMCPValues}
+      defaultSelectedValues={mcpValues ?? []}
+      renderSelectedValues={renderSelectedValues}
+      placeholder={localize('com_ui_mcp_servers')}
+      popoverClassName="min-w-fit"
+      className="badge-icon min-w-fit"
+      selectIcon={
+        <img 
+          src="/assets/Wagmi_Tech_Logo_Avatar.png" 
+          alt="Wagmi Tech Logo" 
+          className="icon-md text-text-primary" 
+          style={{ width: '1rem', height: '1rem', objectFit: 'contain' }}
+        />
+      }
+      selectItemsClassName="border border-blue-600/50 bg-blue-500/10 hover:bg-blue-700/10"
+      selectClassName="group relative inline-flex items-center justify-center md:justify-start gap-1.5 rounded-full border border-border-medium text-sm font-medium transition-all md:w-full size-9 p-2 md:p-3 bg-transparent shadow-sm hover:bg-surface-hover hover:shadow-md active:shadow-inner"
+    />
   );
 }
 

@@ -1,7 +1,17 @@
 const mongoose = require('mongoose');
 const { createMethods } = require('@librechat/data-schemas');
 const methods = createMethods(mongoose);
-const { comparePassword } = require('./userMethods');
+const {
+  comparePassword,
+  deleteUserById,
+  generateToken,
+  getUserById,
+  updateUser,
+  createUser,
+  countUsers,
+  findUser,
+  getAllUsers,
+} = require('./userMethods');
 const {
   findFileById,
   createFile,
@@ -27,6 +37,15 @@ const { File } = require('~/db/models');
 module.exports = {
   ...methods,
   comparePassword,
+  deleteUserById,
+  generateToken,
+  getUserById,
+  updateUser,
+  createUser,
+  countUsers,
+  findUser,
+  getAllUsers,
+
   findFileById,
   createFile,
   updateFile,

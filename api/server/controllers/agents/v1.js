@@ -23,6 +23,8 @@ const {
   updateAgent,
   deleteAgent,
   getAgent,
+  getListAgents,
+  updateAgentSharedUsers,
 } = require('~/models/Agent');
 const {
   findPubliclyAccessibleResources,
@@ -203,7 +205,9 @@ const updateAgentHandler = async (req, res) => {
   try {
     const id = req.params.id;
     const validatedData = agentUpdateSchema.parse(req.body);
-    const { _id, ...updateData } = removeNullishValues(validatedData);
+    const { _id, projectIds, removeProjectIds, sharedWithUsers, removeSharedUsers, ...restData } = removeNullishValues(validatedData);
+    const updateData = restData;
+    const isAdmin = req.user.role === SystemRoles.ADMIN;
     const existingAgent = await getAgent({ id });
 
     if (!existingAgent) {
@@ -219,6 +223,15 @@ const updateAgentHandler = async (req, res) => {
 
     // Add version count to the response
     updatedAgent.version = updatedAgent.versions ? updatedAgent.versions.length : 0;
+
+    if (sharedWithUsers || removeSharedUsers) {
+      updatedAgent = await updateAgentSharedUsers({
+        user: req.user,
+        agentId: id,
+        sharedWithUsers,
+        removeSharedUsers,
+      });
+    }
 
     if (updatedAgent.author) {
       updatedAgent.author = updatedAgent.author.toString();

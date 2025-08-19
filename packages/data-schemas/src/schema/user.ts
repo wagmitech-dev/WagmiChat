@@ -1,6 +1,40 @@
-import { Schema } from 'mongoose';
+import { Schema, Document } from 'mongoose';
 import { SystemRoles } from 'librechat-data-provider';
-import { IUser } from '~/types';
+
+export interface IUser extends Document {
+  name?: string;
+  username?: string;
+  email: string;
+  emailVerified: boolean;
+  password?: string;
+  avatar?: string;
+  provider: string;
+  role?: string;
+  status?: 'pending' | 'active' | 'suspended';
+  googleId?: string;
+  facebookId?: string;
+  openidId?: string;
+  ldapId?: string;
+  githubId?: string;
+  discordId?: string;
+  appleId?: string;
+  plugins?: unknown[];
+  twoFactorEnabled?: boolean;
+  totpSecret?: string;
+  backupCodes?: Array<{
+    codeHash: string;
+    used: boolean;
+    usedAt?: Date | null;
+  }>;
+  refreshToken?: Array<{
+    refreshToken: string;
+  }>;
+  expiresAt?: Date;
+  termsAccepted?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 
 // Session sub-schema
 const SessionSchema = new Schema(
@@ -65,6 +99,11 @@ const userSchema = new Schema<IUser>(
     role: {
       type: String,
       default: SystemRoles.USER,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'active', 'suspended'],
+      default: 'active',
     },
     googleId: {
       type: String,

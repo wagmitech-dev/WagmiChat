@@ -15,6 +15,7 @@ import {
   SetConvoProvider,
   FileMapContext,
 } from '~/Providers';
+import { MCPLoadingProvider } from '~/Providers/MCPLoadingProvider';
 import { useUserTermsQuery, useGetStartupConfig } from '~/data-provider';
 import { TermsAndConditionsModal } from '~/components/ui';
 import { Nav, MobileNav } from '~/components/Nav';
@@ -70,7 +71,8 @@ export default function Root() {
         <AssistantsMapContext.Provider value={assistantsMap}>
           <AgentsMapContext.Provider value={agentsMap}>
             <PromptGroupsProvider>
-              <Banner onHeightChange={setBannerHeight} />
+              <MCPLoadingProvider>
+                <Banner onHeightChange={setBannerHeight} />
               <div 
                 className="flex"
                 style={{ height: `calc(100dvh - ${bannerHeight}px)` }}
@@ -97,7 +99,6 @@ export default function Root() {
                           backgroundSize: "auto",
                           backgroundRepeat: "repeat",
                           backgroundPosition: 'center center',
-                  
                       }} 
                     />
                   </div>
@@ -109,18 +110,19 @@ export default function Root() {
                   </div>
                 </div>
               </div>
+              {config?.interface?.termsOfService?.modalAcceptance === true && (
+                <TermsAndConditionsModal
+                  open={showTerms}
+                  onOpenChange={setShowTerms}
+                  onAccept={handleAcceptTerms}
+                  onDecline={handleDeclineTerms}
+                  title={config.interface.termsOfService.modalTitle}
+                  modalContent={config.interface.termsOfService.modalContent}
+                />
+              )}
+              </MCPLoadingProvider>
             </PromptGroupsProvider>
           </AgentsMapContext.Provider>
-          {config?.interface?.termsOfService?.modalAcceptance === true && (
-            <TermsAndConditionsModal
-              open={showTerms}
-              onOpenChange={setShowTerms}
-              onAccept={handleAcceptTerms}
-              onDecline={handleDeclineTerms}
-              title={config.interface.termsOfService.modalTitle}
-              modalContent={config.interface.termsOfService.modalContent}
-            />
-          )}
         </AssistantsMapContext.Provider>
       </FileMapContext.Provider>
     </SetConvoProvider>

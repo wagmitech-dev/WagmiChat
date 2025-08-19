@@ -20,6 +20,7 @@ export * from './roles';
 export * from './types';
 export * from './types/agents';
 export * from './types/assistants';
+export * from './types/auth';
 export * from './types/files';
 export * from './types/mutations';
 export * from './types/queries';
@@ -30,6 +31,8 @@ export * from './types/graph';
 export * from './accessPermissions';
 /* query/mutation keys */
 export * from './keys';
+/* react-query hooks and functions */
+export * from './react-query';
 /* api call helpers */
 export * from './headers-helpers';
 export { default as request } from './request';
