@@ -104,7 +104,7 @@ const SidePanelGroup = memo(
       panelRef.current?.collapse();
     }, []);
 
-  return (
+    return (
     <>
       <ResizablePanelGroup
         direction="horizontal"
