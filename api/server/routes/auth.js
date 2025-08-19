@@ -29,7 +29,6 @@ const {
   checkActivationToken,
   registerLimiter,
   requireLdapAuth,
-  setBalanceConfig,
   requireLocalAuth,
   resetPasswordLimiter,
   validateRegistration,
@@ -38,8 +37,8 @@ const {
 } = require('~/server/middleware');
 const { Balance } = require('~/db/models');
 
-// Create balance config with both approaches
-const balanceConfig = createSetBalanceConfig({
+// Create balance config
+const setBalanceConfig = createSetBalanceConfig({
   getBalanceConfig,
   Balance,
 });
@@ -48,36 +47,36 @@ const router = express.Router();
 
 const ldapAuth = !!process.env.LDAP_URL && !!process.env.LDAP_USER_SEARCH_BASE;
 //Local
-router.post('/logout', middleware.requireJwtAuth, logoutController);
+router.post('/logout', requireJwtAuth, logoutController);
 router.post(
   '/login',
-  middleware.logHeaders,
-  middleware.loginLimiter,
-  middleware.checkBan,
-  ldapAuth ? middleware.requireLdapAuth : middleware.requireLocalAuth,
+  logHeaders,
+  loginLimiter,
+  checkBan,
+  ldapAuth ? requireLdapAuth : requireLocalAuth,
   setBalanceConfig,
   loginController,
 );
 router.post('/refresh', refreshController);
 router.post(
   '/register',
-  middleware.registerLimiter,
-  middleware.checkBan,
-  middleware.checkInviteUser,
-  middleware.validateRegistration,
+  registerLimiter,
+  checkBan,
+  checkInviteUser,
+  validateRegistration,
   registrationController,
 );
 router.post(
   '/requestPasswordReset',
-  middleware.resetPasswordLimiter,
-  middleware.checkBan,
-  middleware.validatePasswordReset,
+  resetPasswordLimiter,
+  checkBan,
+  validatePasswordReset,
   resetPasswordRequestController,
 );
 router.post(
   '/resetPassword',
-  middleware.checkBan,
-  middleware.validatePasswordReset,
+  checkBan,
+  validatePasswordReset,
   resetPasswordController,
 );
 

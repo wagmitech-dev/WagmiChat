@@ -1,5 +1,5 @@
 const { getInvite } = require('~/models/inviteUser');
-const { deleteTokens } = require('~/models/Token');
+const { deleteTokens } = require('~/models');
 
 /**
  * Middleware to check activation token for setting password

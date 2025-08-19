@@ -44,12 +44,5 @@ const getAllUsers = async function (filters = {}) {
 
 module.exports = {
   comparePassword,
-  deleteUserById,
-  generateToken,
-  getUserById,
-  updateUser,
-  createUser,
-  countUsers,
-  findUser,
-  getAllUsers, // Add the new function
+  getAllUsers,
 };

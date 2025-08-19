@@ -3,13 +3,6 @@ const { createMethods } = require('@librechat/data-schemas');
 const methods = createMethods(mongoose);
 const {
   comparePassword,
-  deleteUserById,
-  generateToken,
-  getUserById,
-  updateUser,
-  createUser,
-  countUsers,
-  findUser,
   getAllUsers,
 } = require('./userMethods');
 const {
@@ -37,13 +30,6 @@ const { File } = require('~/db/models');
 module.exports = {
   ...methods,
   comparePassword,
-  deleteUserById,
-  generateToken,
-  getUserById,
-  updateUser,
-  createUser,
-  countUsers,
-  findUser,
   getAllUsers,
 
   findFileById,

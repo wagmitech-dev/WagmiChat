@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { webcrypto } = require('node:crypto');
-const { isEnabled } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
 const { SystemRoles, errorsToString } = require('librechat-data-provider');
 const {

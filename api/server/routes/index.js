@@ -27,7 +27,6 @@ const edit = require('./edit');
 const keys = require('./keys');
 const user = require('./user');
 const mcp = require('./mcp');
-const ask = require('./ask');
 const admin = require('./admin');
 
 module.exports = {
@@ -61,5 +60,4 @@ module.exports = {
   staticRoute,
   accessPermissions,
   admin,
-  ask,
 };

@@ -110,61 +110,27 @@ function MCPSelect({ conversationId }: { conversationId?: string | null }) {
     [localize],
   );
 
-  const renderItemContent = useCallback(
-    (serverName: string, defaultContent: React.ReactNode) => {
-      const statusIconProps = getServerStatusIconProps(serverName);
-      const isServerInitializing = isInitializing(serverName);
+  // Simplified render - just return the default content
+  const renderItemContent = undefined;
 
-      /**
-       Common wrapper for the main content (check mark + text).
-       Ensures Check & Text are adjacent and the group takes available space.
-        */
-      const mainContentWrapper = (
-        <button
-          type="button"
-          className={`flex flex-grow items-center rounded bg-transparent p-0 text-left transition-colors focus:outline-none ${
-            isServerInitializing ? 'opacity-50' : ''
-          }`}
-          tabIndex={0}
-          disabled={isServerInitializing}
-        >
-          {defaultContent}
-        </button>
-      );
-
-      const statusIcon = statusIconProps && <MCPServerStatusIcon {...statusIconProps} />;
-
-      if (statusIcon) {
-        return (
-          <div className="flex w-full items-center justify-between">
-            {mainContentWrapper}
-            <div className="ml-2 flex items-center">{statusIcon}</div>
-          </div>
-        );
-      }
-
-      return mainContentWrapper;
-    },
-    [getServerStatusIconProps, isInitializing],
-  );
-
-  if ((!mcpValues || mcpValues.length === 0) && !isPinned) {
+  if (!mcpValues || mcpValues.length === 0) {
     return null;
   }
 
-  if (!configuredServers || configuredServers.length === 0) {
+  if (!mcpServerSet || mcpServerSet.size === 0) {
     return null;
   }
 
-  const configDialogProps = getConfigDialogProps();
+  const mcpServers = Array.from(mcpServerSet);
 
   return (
     <MultiSelect
-      items={mcpServers ?? []}
+      items={mcpServers}
       selectedValues={mcpValues ?? []}
       setSelectedValues={setMCPValues}
       defaultSelectedValues={mcpValues ?? []}
       renderSelectedValues={renderSelectedValues}
+      renderItemContent={renderItemContent}
       placeholder={localize('com_ui_mcp_servers')}
       popoverClassName="min-w-fit"
       className="badge-icon min-w-fit"

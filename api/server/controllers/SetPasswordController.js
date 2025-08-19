@@ -1,6 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { updateUser, findUser } = require('~/models/userMethods');
-const { deleteTokens } = require('~/models/Token');
+const { updateUser, findUser, deleteTokens } = require('~/models');
 const { checkActivationToken, checkBan, inviteLimiter } = require('~/server/middleware');
 const { setAuthTokens } = require('~/server/services/AuthService');
 const { logger } = require('~/config');
