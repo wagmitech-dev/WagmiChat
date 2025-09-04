@@ -124,6 +124,10 @@ export const resetPassword = (payload: t.TResetPassword) => {
   return request.post(endpoints.resetPassword(), payload);
 };
 
+export const validateInviteToken = (token: string): Promise<{ email: string }> => {
+  return request.get(endpoints.validateInviteToken(token));
+};
+
 export const verifyEmail = (payload: t.TVerifyEmail): Promise<t.VerifyEmailResponse> => {
   return request.post(endpoints.verifyEmail(), payload);
 };

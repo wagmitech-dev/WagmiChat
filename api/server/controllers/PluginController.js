@@ -96,7 +96,7 @@ const getAvailableTools = async (req, res) => {
     }
 
     /** @type {Record<string, FunctionTool> | null} Get tool definitions to filter which tools are actually available */
-    let toolDefinitions = await getCachedTools({ includeGlobal: true });
+    // toolDefinitions will be defined below after combining both cached and available tools
     let prelimCachedTools;
 
     /** @type {import('@librechat/api').LCManifestTool[]} */
@@ -142,7 +142,7 @@ const getAvailableTools = async (req, res) => {
     // Combine both cached tools and available tools
     const cachedToolDefinitions = (await getCachedTools({ includeGlobal: true })) || {};
     const availableToolDefinitions = req.app.locals.availableTools || {};
-    const toolDefinitions = { ...availableToolDefinitions, ...cachedToolDefinitions };
+    let toolDefinitions = { ...availableToolDefinitions, ...cachedToolDefinitions };
 
     /** Filter plugins based on availability and add MCP-specific auth config */
     const toolsOutput = [];
