@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { webcrypto } = require('node:crypto');
 const { logger } = require('@librechat/data-schemas');
+const { isEnabled, checkEmailConfig } = require('@librechat/api');
 const { SystemRoles, errorsToString } = require('librechat-data-provider');
 const {
   findUser,
@@ -20,10 +21,10 @@ const {
   generateRefreshToken,
 } = require('~/models');
 const { isEmailDomainAllowed } = require('~/server/services/domains');
-const { isEnabled, checkEmailConfig, sendEmail } = require('~/server/utils');
-const { getBalanceConfig } = require('~/server/services/Config');
 const { isEmailWhitelisted } = require('~/server/services/emailWhitelist');
 const { registerSchema } = require('~/strategies/validators');
+const { getAppConfig } = require('~/server/services/Config');
+const { sendEmail } = require('~/server/utils');
 
 const domains = {
   client: process.env.DOMAIN_CLIENT,
@@ -78,7 +79,7 @@ const createTokenHash = () => {
 
 /**
  * Send Verification Email
- * @param {Partial<MongoUser> & { _id: ObjectId, email: string, name: string}} user
+ * @param {Partial<IUser>} user
  * @returns {Promise<void>}
  */
 const sendVerificationEmail = async (user) => {
@@ -112,7 +113,7 @@ const sendVerificationEmail = async (user) => {
 
 /**
  * Verify Email
- * @param {Express.Request} req
+ * @param {ServerRequest} req
  */
 const verifyEmail = async (req) => {
   const { email, token } = req.body;
@@ -160,9 +161,9 @@ const verifyEmail = async (req) => {
 
 /**
  * Register a new user.
- * @param {MongoUser} user <email, password, name, username>
- * @param {Partial<MongoUser>} [additionalData={}]
- * @returns {Promise<{status: number, message: string, user?: MongoUser}>}
+ * @param {IUser} user <email, password, name, username>
+ * @param {Partial<IUser>} [additionalData={}]
+ * @returns {Promise<{status: number, message: string, user?: IUser}>}
  */
 const registerUser = async (user, additionalData = {}) => {
   const { error } = registerSchema.safeParse(user);
@@ -195,10 +196,16 @@ const registerUser = async (user, additionalData = {}) => {
       return { status: 200, message: genericVerificationMessage };
     }
 
-    if (!(await isEmailWhitelisted(email))) {
+    const appConfig = await getAppConfig({ role: user.role });
+    
+    // Check both email whitelist (custom feature) and domain restrictions (upstream)
+    const isWhitelisted = await isEmailWhitelisted(email);
+    const isDomainAllowed = isEmailDomainAllowed(email, appConfig?.registration?.allowedDomains);
+    
+    if (!isWhitelisted && !isDomainAllowed) {
       const errorMessage =
         'Your email address is not approved for registration. Please request whitelist approval first.';
-      logger.error(`[registerUser] [Email not whitelisted] [Email: ${user.email}]`);
+      logger.error(`[registerUser] [Email not whitelisted/domain not allowed] [Email: ${user.email}]`);
       return { status: 403, message: errorMessage };
     }
 
@@ -219,9 +226,8 @@ const registerUser = async (user, additionalData = {}) => {
 
     const emailEnabled = checkEmailConfig();
     const disableTTL = isEnabled(process.env.ALLOW_UNVERIFIED_EMAIL_LOGIN);
-    const balanceConfig = await getBalanceConfig();
 
-    const newUser = await createUser(newUserData, balanceConfig, disableTTL, true);
+    const newUser = await createUser(newUserData, appConfig?.balance, disableTTL, true);
     newUserId = newUser._id;
     if (emailEnabled && !newUser.emailVerified) {
       await sendVerificationEmail({
@@ -248,7 +254,7 @@ const registerUser = async (user, additionalData = {}) => {
 
 /**
  * Request password reset
- * @param {Express.Request} req
+ * @param {ServerRequest} req
  */
 const requestPasswordReset = async (req) => {
   const { email } = req.body;
@@ -500,18 +506,6 @@ const resendVerificationEmail = async (req) => {
     };
   }
 };
-/**
- * Generate a short-lived JWT token
- * @param {String} userId - The ID of the user
- * @param {String} [expireIn='5m'] - The expiration time for the token (default is 5 minutes)
- * @returns {String} - The generated JWT token
- */
-const generateShortLivedToken = (userId, expireIn = '5m') => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: expireIn,
-    algorithm: 'HS256',
-  });
-};
 
 module.exports = {
   logoutUser,
@@ -522,5 +516,4 @@ module.exports = {
   setOpenIDAuthTokens,
   requestPasswordReset,
   resendVerificationEmail,
-  generateShortLivedToken,
 };

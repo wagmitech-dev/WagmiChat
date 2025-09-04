@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import React, { useContext, useState, useEffect } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { ThemeContext, Spinner, Button } from '@librechat/client';
+import { ThemeContext, Spinner, Button, isDark } from '@librechat/client';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { useRegisterUserMutation } from 'librechat-data-provider/react-query';
 import { dataService } from 'librechat-data-provider';
@@ -35,7 +35,7 @@ const Registration: React.FC = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get('token');
-  const validTheme = theme === 'dark' ? 'dark' : 'light';
+  const validTheme = isDark(theme) ? 'dark' : 'light';
 
   // only require captcha if we have a siteKey
   const requireCaptcha = Boolean(startupConfig?.turnstile?.siteKey);
@@ -212,7 +212,7 @@ const Registration: React.FC = () => {
             {renderInput('password', 'com_auth_password', 'password', {
               required: localize('com_auth_password_required'),
               minLength: {
-                value: 8,
+                value: startupConfig?.minPasswordLength || 8,
                 message: localize('com_auth_password_min_length'),
               },
               maxLength: {

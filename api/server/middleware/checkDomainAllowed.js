@@ -1,5 +1,7 @@
+const { logger } = require('@librechat/data-schemas');
 const { isEmailWhitelisted } = require('~/server/services/emailWhitelist');
-const { logger } = require('~/config');
+const { isEmailDomainAllowed } = require('~/server/services/domains');
+const { getAppConfig } = require('~/server/services/Config');
 
 /**
  * Checks if the user's email is whitelisted for social login
@@ -14,8 +16,16 @@ const { logger } = require('~/config');
  */
 const checkEmailWhitelisted = async (req, res, next = () => {}) => {
   const email = req?.user?.email;
-  if (email && !(await isEmailWhitelisted(email))) {
-    logger.error(`[Social Login] [Email not whitelisted] [Email: ${email}]`);
+  const appConfig = await getAppConfig({
+    role: req?.user?.role,
+  });
+  
+  // Check both email whitelist (custom feature) and domain restrictions (upstream)
+  const isWhitelisted = await isEmailWhitelisted(email);
+  const isDomainAllowed = isEmailDomainAllowed(email, appConfig?.registration?.allowedDomains);
+  
+  if (email && !isWhitelisted && !isDomainAllowed) {
+    logger.error(`[Social Login] [Email not whitelisted/domain not allowed] [Email: ${email}]`);
     return res.redirect('/login?error=email_not_whitelisted');
   } else {
     return next();

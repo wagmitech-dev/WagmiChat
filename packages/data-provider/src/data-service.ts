@@ -1,6 +1,5 @@
 import type { AxiosResponse } from 'axios';
 import type * as t from './types';
-import type * as auth from './types/auth';
 import * as endpoints from './api-endpoints';
 import * as a from './types/assistants';
 import * as ag from './types/agents';
@@ -56,35 +55,12 @@ export function deleteSharedLink(shareId: string): Promise<m.TDeleteSharedLinkRe
 }
 
 export function updateUserKey(payload: t.TUpdateUserKeyRequest) {
-  return request.post(endpoints.keys(), payload);
-}
+  const { value } = payload;
+  if (!value) {
+    throw new Error('value is required');
+  }
 
-// Email whitelist functions
-export function requestEmailWhitelist(
-  payload: auth.TRequestEmailWhitelistRequest,
-): Promise<auth.TRequestEmailWhitelistResponse> {
-  return request.post(endpoints.requestEmailWhitelist(), payload);
-}
-
-export function getEmailWhitelistRequests(
-  status?: string,
-  page?: number,
-  limit?: number,
-): Promise<auth.TEmailWhitelistRequestsResponse> {
-  return request.get(endpoints.getEmailWhitelistRequests(status, page, limit));
-}
-
-export function reviewEmailWhitelistRequest(
-  requestId: string,
-  payload: auth.TReviewEmailWhitelistRequest,
-): Promise<auth.TReviewEmailWhitelistResponse> {
-  return request.put(endpoints.reviewEmailWhitelistRequest(requestId), payload);
-}
-
-export function deleteEmailWhitelistRequest(
-  requestId: string,
-): Promise<{ success: boolean; message: string }> {
-  return request.delete(endpoints.deleteEmailWhitelistRequest(requestId));
+  return request.put(endpoints.keys(), payload);
 }
 
 export function getPresets(): Promise<s.TPreset[]> {
@@ -158,14 +134,6 @@ export const resendVerificationEmail = (
   return request.post(endpoints.resendVerificationEmail(), payload);
 };
 
-export const setPassword = (payload: t.TSetPasswordRequest): Promise<t.TSetPasswordResponse> => {
-  return request.post(endpoints.setPassword(), payload);
-};
-
-export const validateInviteToken = (token: string): Promise<{ email: string }> => {
-  return request.get(endpoints.validateInviteToken(token));
-};
-
 export const getAvailablePlugins = (): Promise<s.TPlugin[]> => {
   return request.get(endpoints.plugins());
 };
@@ -212,10 +180,6 @@ export const getAIEndpoints = (): Promise<t.TEndpointsConfig> => {
 
 export const getModels = async (): Promise<t.TModelsConfig> => {
   return request.get(endpoints.models());
-};
-
-export const getEndpointsConfigOverride = (): Promise<unknown | boolean> => {
-  return request.get(endpoints.endpointsConfigOverride());
 };
 
 /* Assistants */
@@ -720,7 +684,7 @@ export const editArtifact = async ({
   messageId,
   ...params
 }: m.TEditArtifactRequest): Promise<m.TEditArtifactResponse> => {
-  return request.post(`/api/messages/artifact/${messageId}`, params);
+  return request.post(endpoints.messagesArtifacts(messageId), params);
 };
 
 export function getMessagesByConvoId(conversationId: string): Promise<s.TMessage[]> {
@@ -989,9 +953,6 @@ export function getGraphApiToken(params: q.GraphTokenParams): Promise<q.GraphTok
   return request.get(endpoints.graphToken(params.scopes));
 }
 
-export function getAllUsers(): Promise<{
-  success: boolean;
-  data: Array<{ id: string; email: string; name: string }>;
-}> {
-  return request.get(endpoints.users());
+export function getDomainServerBaseUrl(): string {
+  return `${endpoints.apiBaseUrl()}/api`;
 }

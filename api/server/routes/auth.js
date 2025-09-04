@@ -19,7 +19,7 @@ const { verify2FAWithTempToken } = require('~/server/controllers/auth/TwoFactorA
 const { logoutController } = require('~/server/controllers/auth/LogoutController');
 const { loginController } = require('~/server/controllers/auth/LoginController');
 const { setPasswordController } = require('~/server/controllers/SetPasswordController');
-const { getBalanceConfig } = require('~/server/services/Config');
+const { getAppConfig } = require('~/server/services/Config');
 const {
   checkBan,
   logHeaders,
@@ -39,7 +39,7 @@ const { Balance } = require('~/db/models');
 
 // Create balance config
 const setBalanceConfig = createSetBalanceConfig({
-  getBalanceConfig,
+  getAppConfig,
   Balance,
 });
 
