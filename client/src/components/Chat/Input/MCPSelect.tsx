@@ -4,36 +4,33 @@ import { SystemRoles } from 'librechat-data-provider';
 import MCPServerStatusIcon from '~/components/MCP/MCPServerStatusIcon';
 import MCPConfigDialog from '~/components/MCP/MCPConfigDialog';
 import { useBadgeRowContext } from '~/Providers';
-import { useMCPServerManager } from '~/hooks';
 import { useAuthContext } from '~/hooks';
 import { useGetStartupConfig } from '~/data-provider';
 
-type MCPSelectProps = { conversationId?: string | null };
-
-function MCPSelectContent({ conversationId }: MCPSelectProps) {
+function MCPSelectContent() {
+  const { conversationId, mcpServerManager } = useBadgeRowContext();
   const { user } = useAuthContext();
   const { data: startupConfig } = useGetStartupConfig();
-  
+
   // Check if MCP should be restricted to admins only
   const mcpJustAdmin = startupConfig?.mcpJustAdmin === true;
   const isAdmin = user?.role === SystemRoles.ADMIN;
-  
+
   // If MCP is restricted to admins only and user is not admin, don't render the component
   if (mcpJustAdmin && !isAdmin) {
     return null;
   }
-  
   const {
-    configuredServers,
-    mcpValues,
-    isPinned,
-    placeholderText,
-    batchToggleServers,
-    getServerStatusIconProps,
-    getConfigDialogProps,
-    isInitializing,
     localize,
-  } = useMCPServerManager({ conversationId });
+    isPinned,
+    mcpValues,
+    isInitializing,
+    placeholderText,
+    configuredServers,
+    batchToggleServers,
+    getConfigDialogProps,
+    getServerStatusIconProps,
+  } = mcpServerManager;
 
   const renderSelectedValues = useCallback(
     (values: string[], placeholder?: string) => {
@@ -48,8 +45,49 @@ function MCPSelectContent({ conversationId }: MCPSelectProps) {
     [localize],
   );
 
-  // Simplified render - just return the default content
-  const renderItemContent = undefined;
+  const renderItemContent = useCallback(
+    (serverName: string, defaultContent: React.ReactNode) => {
+      const statusIconProps = getServerStatusIconProps(serverName);
+      const isServerInitializing = isInitializing(serverName);
+
+      /**
+       Common wrapper for the main content (check mark + text).
+       Ensures Check & Text are adjacent and the group takes available space.
+        */
+      const mainContentWrapper = (
+        <button
+          type="button"
+          className={`flex flex-grow items-center rounded bg-transparent p-0 text-left transition-colors focus:outline-none ${
+            isServerInitializing ? 'opacity-50' : ''
+          }`}
+          tabIndex={0}
+          disabled={isServerInitializing}
+        >
+          {defaultContent}
+        </button>
+      );
+
+      const statusIcon = statusIconProps && <MCPServerStatusIcon {...statusIconProps} />;
+
+      if (statusIcon) {
+        return (
+          <div className="flex w-full items-center justify-between">
+            {mainContentWrapper}
+            <div className="ml-2 flex items-center">{statusIcon}</div>
+          </div>
+        );
+      }
+
+      return mainContentWrapper;
+    },
+    [getServerStatusIconProps, isInitializing],
+  );
+
+  if (!isPinned && mcpValues?.length === 0) {
+    return null;
+  }
+
+  const configDialogProps = getConfigDialogProps();
 
   return (
     <>
@@ -80,10 +118,15 @@ function MCPSelectContent({ conversationId }: MCPSelectProps) {
   );
 }
 
-function MCPSelect(props: MCPSelectProps) {
-  const { mcpServerNames } = useBadgeRowContext();
-  if ((mcpServerNames?.length ?? 0) === 0) return null;
-  return <MCPSelectContent {...props} />;
+function MCPSelect() {
+  const { mcpServerManager } = useBadgeRowContext();
+  const { configuredServers } = mcpServerManager;
+
+  if (!configuredServers || configuredServers.length === 0) {
+    return null;
+  }
+
+  return <MCPSelectContent />;
 }
 
 export default memo(MCPSelect);

@@ -124,7 +124,6 @@ router.get('/', async function (req, res) {
       payload.minPasswordLength = minPasswordLength;
     }
 
-    payload.mcpServers = {};
     const getMCPServers = () => {
       try {
         if (appConfig?.mcpConfig == null) {
@@ -138,6 +137,9 @@ router.get('/', async function (req, res) {
         if (!mcpServers) return;
         const oauthServers = mcpManager.getOAuthServers();
         for (const serverName in mcpServers) {
+          if (!payload.mcpServers) {
+            payload.mcpServers = {};
+          }
           const serverConfig = mcpServers[serverName];
           payload.mcpServers[serverName] = removeNullishValues({
             startup: serverConfig?.startup,
@@ -156,7 +158,7 @@ router.get('/', async function (req, res) {
     if (
       webSearchConfig != null &&
       (webSearchConfig.searchProvider ||
-        webSearchConfig.scraperType ||
+        webSearchConfig.scraperProvider ||
         webSearchConfig.rerankerType)
     ) {
       payload.webSearch = {};
@@ -165,8 +167,8 @@ router.get('/', async function (req, res) {
     if (webSearchConfig?.searchProvider) {
       payload.webSearch.searchProvider = webSearchConfig.searchProvider;
     }
-    if (webSearchConfig?.scraperType) {
-      payload.webSearch.scraperType = webSearchConfig.scraperType;
+    if (webSearchConfig?.scraperProvider) {
+      payload.webSearch.scraperProvider = webSearchConfig.scraperProvider;
     }
     if (webSearchConfig?.rerankerType) {
       payload.webSearch.rerankerType = webSearchConfig.rerankerType;

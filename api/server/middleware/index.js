@@ -1,6 +1,5 @@
 const validatePasswordReset = require('./validatePasswordReset');
 const validateRegistration = require('./validateRegistration');
-const validateImageRequest = require('./validateImageRequest');
 const buildEndpointOption = require('./buildEndpointOption');
 const validateMessageReq = require('./validateMessageReq');
 const checkEmailWhitelisted = require('./checkEmailWhitelisted');
@@ -52,6 +51,5 @@ module.exports = {
   validateMessageReq,
   buildEndpointOption,
   validateRegistration,
-  validateImageRequest,
   validatePasswordReset,
 };

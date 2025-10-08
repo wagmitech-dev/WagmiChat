@@ -15,20 +15,25 @@ const { getAppConfig } = require('~/server/services/Config');
  * @returns {Promise<function|Object>} - Returns a Promise which when resolved calls next middleware if the email is whitelisted
  */
 const checkEmailWhitelisted = async (req, res, next = () => {}) => {
-  const email = req?.user?.email;
-  const appConfig = await getAppConfig({
-    role: req?.user?.role,
-  });
-  
-  // Check both email whitelist (custom feature) and domain restrictions (upstream)
-  const isWhitelisted = await isEmailWhitelisted(email);
-  const isDomainAllowed = isEmailDomainAllowed(email, appConfig?.registration?.allowedDomains);
-  
-  if (email && !isWhitelisted && !isDomainAllowed) {
-    logger.error(`[Social Login] [Email not whitelisted/domain not allowed] [Email: ${email}]`);
-    return res.redirect('/login?error=email_not_whitelisted');
-  } else {
+  try {
+    const email = req?.user?.email;
+    const appConfig = await getAppConfig({
+      role: req?.user?.role,
+    });
+
+    // Check both email whitelist (custom feature) and domain restrictions (upstream)
+    const isWhitelisted = await isEmailWhitelisted(email);
+    const isDomainAllowed = isEmailDomainAllowed(email, appConfig?.registration?.allowedDomains);
+
+    if (email && !isWhitelisted && !isDomainAllowed) {
+      logger.error(`[Social Login] [Email not whitelisted/domain not allowed] [Email: ${email}]`);
+      return res.redirect('/login?error=email_not_whitelisted');
+    }
+
     return next();
+  } catch (error) {
+    logger.error('[checkEmailWhitelisted] Error checking email whitelist/domain:', error);
+    return res.redirect('/login');
   }
 };
 

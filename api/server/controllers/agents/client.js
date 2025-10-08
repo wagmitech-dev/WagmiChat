@@ -7,10 +7,12 @@ const {
   createRun,
   Tokenizer,
   checkAccess,
+  logAxiosError,
   resolveHeaders,
   getBalanceConfig,
   memoryInstructions,
   formatContentStrings,
+  getTransactionsConfig,
   createMemoryProcessor,
 } = require('@librechat/api');
 const {
@@ -87,11 +89,10 @@ function createTokenCounter(encoding) {
 }
 
 function logToolError(graph, error, toolId) {
-  logger.error(
-    '[api/server/controllers/agents/client.js #chatCompletion] Tool Error',
+  logAxiosError({
     error,
-    toolId,
-  );
+    message: `[api/server/controllers/agents/client.js #chatCompletion] Tool Error "${toolId}"`,
+  });
 }
 
 class AgentClient extends BaseClient {
@@ -256,7 +257,7 @@ class AgentClient extends BaseClient {
         };
       }
 
-      const files = await this.addImageURLs(
+      const files = await this.processAttachments(
         orderedMessages[orderedMessages.length - 1],
         attachments,
       );
@@ -623,11 +624,13 @@ class AgentClient extends BaseClient {
    * @param {string} [params.model]
    * @param {string} [params.context='message']
    * @param {AppConfig['balance']} [params.balance]
+   * @param {AppConfig['transactions']} [params.transactions]
    * @param {UsageMetadata[]} [params.collectedUsage=this.collectedUsage]
    */
   async recordCollectedUsage({
     model,
     balance,
+    transactions,
     context = 'message',
     collectedUsage = this.collectedUsage,
   }) {
@@ -653,6 +656,7 @@ class AgentClient extends BaseClient {
       const txMetadata = {
         context,
         balance,
+        transactions,
         conversationId: this.conversationId,
         user: this.user ?? this.options.req.user?.id,
         endpointTokenConfig: this.options.endpointTokenConfig,
@@ -868,11 +872,10 @@ class AgentClient extends BaseClient {
         if (agent.useLegacyContent === true) {
           messages = formatContentStrings(messages);
         }
-        if (
-          agent.model_parameters?.clientOptions?.defaultHeaders?.['anthropic-beta']?.includes(
-            'prompt-caching',
-          )
-        ) {
+        const defaultHeaders =
+          agent.model_parameters?.clientOptions?.defaultHeaders ??
+          agent.model_parameters?.configuration?.defaultHeaders;
+        if (defaultHeaders?.['anthropic-beta']?.includes('prompt-caching')) {
           messages = addCacheControl(messages);
         }
 
@@ -1051,7 +1054,12 @@ class AgentClient extends BaseClient {
         }
 
         const balanceConfig = getBalanceConfig(appConfig);
-        await this.recordCollectedUsage({ context: 'message', balance: balanceConfig });
+        const transactionsConfig = getTransactionsConfig(appConfig);
+        await this.recordCollectedUsage({
+          context: 'message',
+          balance: balanceConfig,
+          transactions: transactionsConfig,
+        });
       } catch (err) {
         logger.error(
           '[api/server/controllers/agents/client.js #chatCompletion] Error recording collected usage',
@@ -1108,9 +1116,16 @@ class AgentClient extends BaseClient {
       appConfig.endpoints?.[endpoint] ??
       titleProviderConfig.customEndpointConfig;
     if (!endpointConfig) {
-      logger.warn(
-        '[api/server/controllers/agents/client.js #titleConvo] Error getting endpoint config',
+      logger.debug(
+        `[api/server/controllers/agents/client.js #titleConvo] No endpoint config for "${endpoint}"`,
       );
+    }
+
+    if (endpointConfig?.titleConvo === false) {
+      logger.debug(
+        `[api/server/controllers/agents/client.js #titleConvo] Title generation disabled for endpoint "${endpoint}"`,
+      );
+      return;
     }
 
     if (endpointConfig?.titleEndpoint && endpointConfig.titleEndpoint !== endpoint) {
@@ -1122,7 +1137,7 @@ class AgentClient extends BaseClient {
         endpoint = endpointConfig.titleEndpoint;
       } catch (error) {
         logger.warn(
-          `[api/server/controllers/agents/client.js #titleConvo] Error getting title endpoint config for ${endpointConfig.titleEndpoint}, falling back to default`,
+          `[api/server/controllers/agents/client.js #titleConvo] Error getting title endpoint config for "${endpointConfig.titleEndpoint}", falling back to default`,
           error,
         );
         // Fall back to original provider config
@@ -1245,11 +1260,13 @@ class AgentClient extends BaseClient {
       });
 
       const balanceConfig = getBalanceConfig(appConfig);
+      const transactionsConfig = getTransactionsConfig(appConfig);
       await this.recordCollectedUsage({
         collectedUsage,
         context: 'title',
         model: clientOptions.model,
         balance: balanceConfig,
+        transactions: transactionsConfig,
       }).catch((err) => {
         logger.error(
           '[api/server/controllers/agents/client.js #titleConvo] Error recording collected usage',
