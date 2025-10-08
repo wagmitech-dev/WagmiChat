@@ -3,6 +3,7 @@ const validateRegistration = require('./validateRegistration');
 const buildEndpointOption = require('./buildEndpointOption');
 const validateMessageReq = require('./validateMessageReq');
 const checkEmailWhitelisted = require('./checkEmailWhitelisted');
+const checkDomainAllowed = require('./checkDomainAllowed');
 const concurrentLimiter = require('./concurrentLimiter');
 const validateEndpoint = require('./validateEndpoint');
 const requireLocalAuth = require('./requireLocalAuth');
@@ -48,6 +49,7 @@ module.exports = {
   configMiddleware,
   concurrentLimiter,
   checkEmailWhitelisted,
+  checkDomainAllowed,
   validateMessageReq,
   buildEndpointOption,
   validateRegistration,
