@@ -17,9 +17,9 @@
   ],
   "scripts": {
     "clean": "rimraf dist",
-    "build": "npm run clean && rollup -c --bundleConfigAsCjs",
-    "build:watch": "rollup -c -w --bundleConfigAsCjs",
-    "dev": "rollup -c -w --bundleConfigAsCjs"
+    "build": "npm run clean && node --max-old-space-size=4096 $(which rollup) -c --bundleConfigAsCjs",
+    "build:watch": "node --max-old-space-size=4096 $(which rollup) -c -w --bundleConfigAsCjs",
+    "dev": "node --max-old-space-size=4096 $(which rollup) -c -w --bundleConfigAsCjs"
   },
   "peerDependencies": {
     "@ariakit/react": "^0.4.16",
