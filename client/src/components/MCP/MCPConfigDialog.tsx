@@ -39,7 +39,7 @@ export default function MCPConfigDialog({
 }: MCPConfigDialogProps) {
   const localize = useLocalize();
 
-  const hasFields = Object.keys(fieldsSchema).length > 0;
+  const hasFields = fieldsSchema && Object.keys(fieldsSchema).length > 0;
   const dialogTitle = hasFields
     ? localize('com_ui_configure_mcp_variables_for', { 0: serverName })
     : `${serverName} MCP Server`;

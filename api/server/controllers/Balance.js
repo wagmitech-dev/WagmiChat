@@ -7,7 +7,11 @@ async function balanceController(req, res) {
   ).lean();
 
   if (!balanceData) {
-    return res.status(404).json({ error: 'Balance not found' });
+    // Return default balance instead of 404 if balance tracking is not enabled
+    return res.status(200).json({
+      tokenCredits: 0,
+      autoRefillEnabled: false,
+    });
   }
 
   // If auto-refill is not enabled, remove auto-refill related fields from the response
