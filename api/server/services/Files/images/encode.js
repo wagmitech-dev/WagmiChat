@@ -100,6 +100,8 @@ async function encodeAndFormat(req, files, endpoint, mode) {
     files: [],
     image_urls: [],
   };
+  /** @type {Array<{ filename: string; type: string; content: string }>} */
+  const textFileSummaries = [];
 
   if (!files || !files.length) {
     return result;
@@ -126,7 +128,11 @@ async function encodeAndFormat(req, files, endpoint, mode) {
         );
       }
 
-      result.text += `${!result.text ? 'Attached document(s):\n```md' : '\n\n---\n\n'}# "${file.filename}"\n${limitedText}\n`;
+      textFileSummaries.push({
+        filename: file.filename || 'Document',
+        type: file.type || 'text/plain',
+        content: limitedText,
+      });
     }
 
     if (!file.height) {
@@ -165,8 +171,22 @@ async function encodeAndFormat(req, files, endpoint, mode) {
     promises.push(preparePayload(req, file));
   }
 
-  if (result.text) {
-    result.text += '\n```';
+  if (textFileSummaries.length > 0) {
+    const header =
+      textFileSummaries.length === 1
+        ? 'The user has attached a file:'
+        : 'The user has attached files:';
+    const summaryBody = textFileSummaries
+      .map(({ filename, type, content }) => {
+        const safeContent = content.replace(/]]>/g, ']]]]><![CDATA[>');
+        return `<file>
+  <filename>${filename}</filename>
+  <type>${type}</type>
+  <content><![CDATA[${safeContent}]]></content>
+</file>`;
+      })
+      .join('\n\n');
+    result.text = `${header}\n\n${summaryBody}`;
   }
 
   const detail = req.body.imageDetail ?? ImageDetail.auto;

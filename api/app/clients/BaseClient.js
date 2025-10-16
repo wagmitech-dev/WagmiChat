@@ -16,6 +16,7 @@ const {
   isParamEndpoint,
   isAgentsEndpoint,
   supportsBalanceCheck,
+  FileSources,
 } = require('librechat-data-provider');
 const { getMessages, saveMessage, updateMessage, saveConvo, getConvo } = require('~/models');
 const { getStrategyFunctions } = require('~/server/services/Files/strategies');
@@ -1254,6 +1255,12 @@ class BaseClient {
     };
 
     for (const file of attachments) {
+      const source = file.source ?? FileSources.local;
+      if (source === FileSources.text || file.type?.startsWith('text/')) {
+        categorizedAttachments.images.push(file);
+        continue;
+      }
+
       if (file.type.startsWith('image/')) {
         categorizedAttachments.images.push(file);
       } else if (file.type === 'application/pdf') {
