@@ -4,8 +4,8 @@ import { TriangleAlert } from 'lucide-react';
 import { actionDelimiter, actionDomainSeparator, Constants } from 'librechat-data-provider';
 import type { TAttachment } from 'librechat-data-provider';
 import { useLocalize, useProgress } from '~/hooks';
-import { AttachmentGroup } from './Parts';
 import { useShareContext } from '~/Providers';
+import { AttachmentGroup } from './Parts';
 import ToolCallInfo from './ToolCallInfo';
 import ProgressText from './ProgressText';
 import { logger, cn } from '~/utils';
@@ -13,6 +13,7 @@ import { useMCPLoadingContextSafe } from '~/Providers/MCPLoadingProvider';
 
 export default function ToolCall({
   initialProgress = 0.1,
+  isLast = false,
   isSubmitting,
   name,
   args: _args = '',
@@ -21,6 +22,7 @@ export default function ToolCall({
   auth,
 }: {
   initialProgress: number;
+  isLast?: boolean;
   isSubmitting: boolean;
   name: string;
   args: string | Record<string, unknown>;
@@ -103,18 +105,25 @@ export default function ToolCall({
   const progress = useProgress(initialProgress);
   const cancelled = (!isSubmitting && progress < 1) || error === true;
 
-  // Handle MCP loading state
   useEffect(() => {
     if (isMCPToolCall && name) {
       if (isSubmitting && progress < 1) {
-        // Start loading for MCP tool call
         startLoading(name, domain || '', function_name);
       } else if (!isSubmitting || progress >= 1) {
-        // Stop loading when complete or cancelled
         stopLoading(name, error, error ? 'Tool call failed' : undefined);
       }
     }
-  }, [isMCPToolCall, name, isSubmitting, progress, error, startLoading, stopLoading, domain, function_name]);
+  }, [
+    isMCPToolCall,
+    name,
+    isSubmitting,
+    progress,
+    error,
+    startLoading,
+    stopLoading,
+    domain,
+    function_name,
+  ]);
 
   const getFinishedText = () => {
     if (cancelled) {
@@ -172,21 +181,25 @@ export default function ToolCall({
     };
   }, [showInfo, isAnimating]);
 
-  // Show a special message for MCP tools in shared conversations
+  if (!isLast && (!function_name || function_name.length === 0) && !output) {
+    return null;
+  }
+
   if (isSharedConvo && isMCPToolCall) {
     return (
-      <div className="my-2.5 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
-        <div className="flex items-center gap-2 text-blue-700">
-          <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-          <span className="font-medium">MCP Tool: {function_name}</span>
-          {domain && <span className="text-blue-600">({domain})</span>}
+      <div className="my-2.5 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700 dark:border-blue-700/40 dark:bg-blue-950/30">
+        <div className="flex items-center gap-2 font-medium">
+          <div className="h-2 w-2 rounded-full bg-blue-500" />
+          <span>MCP tool: {function_name}</span>
+          {domain && <span className="text-blue-600 dark:text-blue-300">({domain})</span>}
         </div>
-        <p className="mt-1 text-blue-600">
-          Bu paylaşılan konuşmada MCP araç çağrısı görüntüleniyor. MCP araçları paylaşılan görünümde etkileşimli değildir.
+        <p className="mt-1 text-blue-600 dark:text-blue-200">
+          This shared conversation shows an MCP tool call. MCP tools are read-only in the shared
+          view.
         </p>
         {output && (
-          <div className="mt-2 rounded border border-blue-200 bg-white p-2 text-sm text-gray-700">
-            <div className="font-medium text-gray-900 mb-1">Sonuç:</div>
+          <div className="mt-2 rounded border border-blue-200 bg-white p-2 text-sm text-gray-700 dark:border-blue-700/40 dark:bg-surface-primary">
+            <div className="mb-1 font-medium text-gray-900 dark:text-white">Result:</div>
             <div className="whitespace-pre-wrap">{output}</div>
           </div>
         )}

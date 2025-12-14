@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useMemo, memo, lazy, Suspense, useRef } from 'react';
 import { useRecoilValue } from 'recoil';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useMediaQuery } from '@librechat/client';
 import { PermissionTypes, Permissions } from 'librechat-data-provider';
 import type { ConversationListResponse } from 'librechat-data-provider';
@@ -190,29 +191,27 @@ const Nav = memo(
 
     return (
       <>
-        <div
-          data-testid="nav"
-          className={cn(
-            'nav active max-w-[320px] flex-shrink-0 transform overflow-x-hidden bg-surface-primary-alt transition-all duration-200 ease-in-out',
-            'md:max-w-[260px]',
-          )}
-          // add style
-          style={{
-            width: navVisible ? navWidth : '0px',
-            visibility: navVisible ? 'visible' : 'hidden',
-            transition: 'width 0.2s, visibility 0.2s',
-            backgroundColor: 'rgba(255, 255, 255, 0.25)',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.18)'
-            // transform: navVisible ? 'translateX(0)' : 'translateX(-100%)',
-          }}
-        >
-          <div className="h-full w-[320px] md:w-[260px]">
-            <div className="flex h-full flex-col">
-              <div
-                className={`flex h-full flex-col transition-opacity duration-200 ease-in-out ${navVisible ? 'opacity-100' : 'opacity-0'}`}
-              >
+        <AnimatePresence initial={false}>
+          {navVisible && (
+            <motion.div
+              data-testid="nav"
+              className={cn(
+                'nav active max-w-[320px] flex-shrink-0 overflow-x-hidden bg-surface-primary-alt',
+                'md:max-w-[260px]',
+              )}
+              initial={{ width: 0 }}
+              animate={{ width: navWidth }}
+              exit={{ width: 0 }}
+              transition={{ duration: 0.2 }}
+              key="nav"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                borderRight: '1px solid rgba(255, 255, 255, 0.18)',
+              }}
+            >
+              <div className="h-full w-[320px] md:w-[260px]">
                 <div className="flex h-full flex-col">
                   <nav
                     id="chat-history-nav"
@@ -242,9 +241,9 @@ const Nav = memo(
                   </nav>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {isSmallScreen && <NavMask navVisible={navVisible} toggleNavVisible={toggleNavVisible} />}
       </>
     );
