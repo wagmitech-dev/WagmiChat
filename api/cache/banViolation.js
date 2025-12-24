@@ -1,12 +1,34 @@
 const { logger } = require('@librechat/data-schemas');
 const { isEnabled, math } = require('@librechat/api');
 const { ViolationTypes } = require('librechat-data-provider');
-const { deleteAllUserSessions } = require('~/models');
+const { deleteAllUserSessions, findUser } = require('~/models');
 const { removePorts } = require('~/server/utils');
 const getLogStores = require('./getLogStores');
 
 const { BAN_VIOLATIONS, BAN_INTERVAL } = process.env ?? {};
 const interval = math(BAN_INTERVAL, 20);
+const { BAN_WHITELIST } = process.env ?? {};
+const banWhitelist = new Set(
+  (BAN_WHITELIST ?? '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+const isWhitelistedUser = async (userId) => {
+  if (!userId || banWhitelist.size === 0) {
+    return false;
+  }
+
+  try {
+    const user = await findUser({ _id: userId }, 'email');
+    const email = user?.email?.toLowerCase();
+    return email ? banWhitelist.has(email) : false;
+  } catch (err) {
+    logger.warn('[BAN] Failed to resolve user for whitelist check', err);
+    return false;
+  }
+};
 
 /**
  * Bans a user based on violation criteria.
@@ -38,6 +60,11 @@ const banViolation = async (req, res, errorMessage) => {
   }
 
   const { type, user_id, prev_count, violation_count } = errorMessage;
+
+  if (await isWhitelistedUser(user_id)) {
+    logger.debug(`[BAN] Skipping ban for whitelisted user ${user_id}`);
+    return;
+  }
 
   const prevThreshold = Math.floor(prev_count / interval);
   const currentThreshold = Math.floor(violation_count / interval);
