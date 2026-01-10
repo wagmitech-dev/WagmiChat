@@ -1851,11 +1851,11 @@ describe('SSRF Protection', () => {
       expect(result.normalizedSpecDomain).toBe('https://example.com');
     });
 
-    it('detects port-based SSRF attempt', () => {
+    it('allows matching host when protocol is inferred for HTTP', () => {
       const result = validateActionDomain('example.com', 'http://example.com:6379/');
-      expect(result.isValid).toBe(false);
+      expect(result.isValid).toBe(true);
       expect(result.normalizedSpecDomain).toBe('http://example.com');
-      expect(result.normalizedClientDomain).toBe('https://example.com');
+      expect(result.normalizedClientDomain).toBe('http://example.com');
     });
 
     it('validates Google Cloud metadata service detection', () => {
@@ -2435,8 +2435,8 @@ describe('SSRF Protection', () => {
 
     it('handles TLD-only domains', () => {
       const result = validateActionDomain('localhost', 'http://localhost/api');
-      expect(result.isValid).toBe(false); // HTTP vs HTTPS mismatch
-      expect(result.normalizedClientDomain).toBe('https://localhost');
+      expect(result.isValid).toBe(true);
+      expect(result.normalizedClientDomain).toBe('http://localhost');
       expect(result.normalizedSpecDomain).toBe('http://localhost');
     });
 

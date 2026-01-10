@@ -222,9 +222,11 @@ export class MCPConnectionFactory {
       }
     };
 
+    logger.info(`${this.logPrefix} Adding oauthRequired event listener`);
     connection.on('oauthRequired', oauthHandler);
 
     return () => {
+      logger.info(`${this.logPrefix} Removing oauthRequired event listener`);
       connection.removeListener('oauthRequired', oauthHandler);
     };
   }

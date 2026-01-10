@@ -521,12 +521,14 @@ export class MCPConnection extends EventEmitter {
           });
 
           // Emit the event
+          logger.info(`${this.getLogPrefix()} Emitting oauthRequired event`);
           this.emit('oauthRequired', {
             serverName: this.serverName,
             error,
             serverUrl,
             userId: this.userId,
           });
+          logger.info(`${this.getLogPrefix()} oauthRequired event emitted`);
 
           try {
             // Wait for OAuth to be handled
@@ -743,7 +745,11 @@ export class MCPConnection extends EventEmitter {
 
     // Check for SSE error with 401 status
     if ('message' in error && typeof error.message === 'string') {
-      return error.message.includes('401') || error.message.includes('Non-200 status code (401)');
+      return (
+        error.message.includes('401') ||
+        error.message.includes('Non-200 status code (401)') ||
+        error.message.includes('Unauthorized')
+      );
     }
 
     // Check for error code
